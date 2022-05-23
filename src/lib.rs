@@ -84,3 +84,76 @@ impl Drop for ThreadPool {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub struct Route<'a> {
+    version: &'a str,
+    path: &'a str,
+    method: &'a str,
+    reply: &'a str,
+    filename: &'a str,
+}
+
+impl<'a> Route<'a> {
+    pub fn new(version: &'a str, path: &'a str, method: &'a str, reply: &'a str, filename: &'a str) -> Route<'a> {
+        Route{ version, path, method, reply, filename, }
+    }
+    fn to_complete_string(&self) -> String {
+        let check = format!("{} {} {}", self.method, self.path, self.version);
+        check
+    }
+
+    pub fn reply(&self) ->  (&str,  &str) {
+        (self.reply, self.filename)
+    }
+}
+
+pub type Routes<'a> = Vec<Route<'a>>;
+pub trait RoutesProperties {
+    fn find_route_by_version(&mut self, version: &str) -> Routes;
+    fn find_route_by_method(&self, method: &str) -> Routes;
+    fn find_route_by_path(&self, path: &str) -> Routes;
+    fn find_route_by_buffer(&self, buff: &[u8]) -> Routes;
+}
+
+impl<'a> RoutesProperties for Routes<'a> {
+    fn find_route_by_version(&mut self, version: &str) -> Routes {
+        let mut vec_routes: Routes = vec![];
+        for route in self {
+            if route.version == version {
+                vec_routes.push(route.clone())
+            }
+        }
+        vec_routes
+    }
+    
+    fn find_route_by_method(&self, method: &str) -> Routes {
+        let mut vec_routes: Routes = vec![];
+        for route in self {
+            if route.method == method {
+                vec_routes.push(route.clone())
+            }
+        }
+        vec_routes
+   }
+    
+    fn find_route_by_path(&self, path: &str) -> Routes {
+        let mut vec_routes: Routes = vec![];
+        for route in self {
+            if route.path == path {
+                vec_routes.push(route.clone())
+            }
+        }
+        vec_routes
+    }
+
+    fn find_route_by_buffer(&self, buffer: &[u8]) -> Routes {
+        let mut vec_routes: Routes = vec![];
+        for route in self {
+            if buffer.starts_with(route.to_complete_string().as_bytes()) {
+                vec_routes.push(route.clone())
+            }
+        }
+        vec_routes
+    }
+}
